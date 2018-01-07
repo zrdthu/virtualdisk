@@ -3,6 +3,7 @@
 #include <string>
 #include <cstring>
 #include <cstdlib>
+#include <vector>
 
 #include "disk.h"
 #include "operation.h"
@@ -26,24 +27,107 @@ int main(int argc, char **argv) {
     fin.close();
     int curInode = 0;
 
-    string cmd, target;
+    int secs = time(NULL);
+    cout << getTime(secs) << endl;
+
+    string cmd, target, option;
     while(cmd != "exit" && cmd != "logout") {
         cout << ">> ";
-        cin >> cmd;
+        string rawCmd;
+        getline(cin, rawCmd);
+        vector<string> cmdSplit = splitString(rawCmd, " ");
+        if (!cmdSplit.size())
+            continue;
+        cmd = cmdSplit[0];
+        //cin >> cmd;
         if (cmd == "pwd")
             pwd(curInode, disk);
         else if (cmd == "cd") {
-            cin >> target;
+            if (cmdSplit.size() == 1)
+                target = "/";
+            else
+                target = cmdSplit[1];
             errorAlert(cmd, target, cd(target, curInode, disk));
         }
         else if (cmd == "mkdir") {
-            cin >> target;
-            errorAlert(cmd, target, mkdir(target, curInode, disk));
+            if (cmdSplit.size() < 2)
+                cout << "Usage: mkdir $path" << endl;
+            else {
+                target = cmdSplit[1];
+                errorAlert(cmd, target, mkdir(target, curInode, disk));
+            }
         }
         else if (cmd == "ls") {
-            cin >> target;
-            errorAlert(cmd, target, ls(target, curInode, disk));
+            bool wrongUsage = 0;
+            target = "";
+            option = "";
+            if (cmdSplit.size() == 1)
+                target = ".";
+            else if (cmdSplit.size() == 2) {
+                if (cmdSplit[1][0] == '-') {
+                    target = ".";
+                    option = cmdSplit[1];
+                }
+                else {
+                    target = cmdSplit[1];
+                    option = "";
+                }
+            }
+            else {
+                target = "";
+                option = "";
+                for (unsigned int i = 1; i < cmdSplit.size(); i ++) {
+                    if (cmdSplit[i][0] == '-')
+                        option += cmdSplit[i];
+                    else if (target.size() == 0)
+                        target = cmdSplit[i];
+                    else
+                        wrongUsage = 1;
+                }
+            }
+            if (wrongUsage) {
+                cout << "Usage: ls [option] [target]" << endl;
+                cout << "    options:" << endl;
+                cout << "    -a    display all items" << endl;
+                cout << "    -l    display details" << endl;
+            }
+            else {
+                errorAlert(cmd, target, ls(target, option, curInode, disk));
+            }
         }
+		else if(cmd=="rmdir"){
+			if (cmdSplit.size() < 2)
+                cout << "Usage: rmdir $path" << endl;
+            else {
+                target = cmdSplit[1];
+			    errorAlert(cmd,target,rmdir(target,curInode,disk));
+            }
+		}
+		else if(cmd=="echo"){
+            if (cmdSplit.size() < 3)
+                cout << "Usage: echo $str $path" << endl;
+            else {
+			    string str = cmdSplit[1];
+                target = cmdSplit[2];
+			    errorAlert(cmd,target,echo(str,target,curInode,disk));
+            }
+		}
+		else if(cmd=="cat"){
+			if (cmdSplit.size() < 2)
+                cout << "Usage: cat $path" << endl;
+            else {
+                target = cmdSplit[1];
+			    errorAlert(cmd,target,cat(target,curInode,disk));
+            }
+		}
+		else if(cmd=="rm"){
+			if (cmdSplit.size() < 2)
+                cout << "Usage: rm $path" << endl;
+            else {
+                target = cmdSplit[1];
+			    errorAlert(cmd,target,rm(target,curInode,disk));
+            }
+		}
         else if (cmd != "exit" && cmd != "logout")
             cout << cmd << ": Command not found" << endl;
     }

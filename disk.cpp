@@ -22,7 +22,9 @@ void writeInode(ofstream &fout, const inode &block) {
     writeInt(fout, block.i_id);
     writeInt(fout, block.i_mode);
     writeInt(fout, block.i_file_size);
-    
+    writeInt(fout, block.i_creation_time);
+    writeInt(fout, block.i_modification_time);
+
     for (int i = 0; i < FILE_MAX_BLOCKS; i ++)
         writeInt(fout, block.i_blocks[i]);
     for (int i = 0; i < INODE_PLACEHOLDER_SIZE; i ++)
@@ -75,6 +77,8 @@ inode readInode(ifstream &fin) {
     block.i_id = getInt(fin);
     block.i_mode = getInt(fin);
     block.i_file_size = getInt(fin);
+    block.i_creation_time = getInt(fin);
+    block.i_modification_time = getInt(fin);
     for (int i = 0; i < FILE_MAX_BLOCKS; i ++)
         block.i_blocks[i] = getInt(fin);
     for (int i = 0; i < INODE_PLACEHOLDER_SIZE; i ++)
@@ -111,6 +115,8 @@ disk_file readDisk(ifstream &fin) {
     
     disk.dirBlockPointer = new dir_block[4096];
     disk.fileBlockPointer = new file_block[4096];
+	memset(disk.dirBlockPointer,0,sizeof(dir_block)*4096);
+	memset(disk.fileBlockPointer,0,sizeof(dir_block)*4096);
     for (int i = 0; i < 4096; i ++) {
         if (disk.inodePointer[i].i_mode == 1)
             disk.dirBlockPointer[i] = readDirBlock(fin);

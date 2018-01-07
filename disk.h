@@ -11,7 +11,7 @@ const int DATA_BLOCK_NUM = 4096;
 const int BLOCK_NUM =  SUPER_BLOCK_NUM + INODE_BLOCK_NUM + DATA_BLOCK_NUM;
 
 const int FILE_MAX_BLOCKS = 1;
-const int INODE_PLACEHOLDER_SIZE = 4;
+const int INODE_PLACEHOLDER_SIZE = 2;
 const int MAX_FILENAME_SIZE = 252;
 const int MAX_DIR_ENTRIES_IN_BLOCK = 16;
 
@@ -27,7 +27,8 @@ struct inode {
     int i_id;
     int i_mode; // file or directory, 0 for file, 1 for dir
     int i_file_size;
-
+    int i_creation_time;
+    int i_modification_time;
     int i_blocks[FILE_MAX_BLOCKS];
     int i_placeholder[INODE_PLACEHOLDER_SIZE];
 };
@@ -54,15 +55,6 @@ struct disk_file {
     bool blockType[4096];
 };
 
-// void writeSuperBlock(ofstream &fout, const super_block &block);
-// void writeInode(ofstream &fout, const inode &block);
-// void writeFileBlock(ofstream &fout, const file_block &block);
-// void writeDirBlock(ofstream &fout, const dir_block &block);
-// int getInt(ifstream &fin);
-// super_block readSuperBlock(ifstream &fin);
-// inode readInode(ifstream &fin);
-// file_block readFileBlock(ifstream &fin);
-// dir_block readDirBlock(ifstream &fin);
 bool checkDisk(const std::string &fileName);
 bool format(const std::string &fileName);
 disk_file readDisk(std::ifstream &fin);

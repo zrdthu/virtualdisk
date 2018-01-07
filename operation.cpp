@@ -3,8 +3,18 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include <iomanip>
+#include <ctime>
 #include "disk.h"
 using namespace std;
+
+string getTime(int time) {
+    time_t tt = (time_t)time;
+    struct tm *tmStruct = localtime(&tt);
+    char buff[80];
+    strftime(buff, 80, "%Y-%m-%d %H:%M:%S", tmStruct);
+    return (string)buff;
+}
 
 vector<string> splitString(const string &src, const string &splitor) {
     string::size_type pos1, pos2;
@@ -44,7 +54,7 @@ void pwd(int curInode, disk_file &disk) {
     string path = "";
     while (curInode) {
         path = "/" + disk.inodeName[curInode] + path;
-        curInode = disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[1].inode_id;         //æ‰¾åˆ°å…¶çˆ¶ç›®å½•çš„inodeç¼–å·
+        curInode = disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[1].inode_id;         //ÕÒµ½Æä¸¸Ä¿Â¼µÄinode±àºÅ
     }
     if (!path.size())
         path = "/";
@@ -52,15 +62,15 @@ void pwd(int curInode, disk_file &disk) {
 }
 
 /***********
- * dst: ç›®æ ‡ä½ç½®è·¯å¾„
+ * dst: Ä¿±êÎ»ÖÃÂ·¾¶
  * curInode:
  * disk:
- * return: æ˜¯å¦æˆåŠŸ 
+ * return: ÊÇ·ñ³É¹¦ 
  *      succeeded: 1
  *      failed:  errorCode
  **********/
 
-int cd(const string &dst, int &curInode, disk_file &disk) {                //è¿”å›æ˜¯å¦æˆåŠŸ
+int cd(const string &dst, int &curInode, disk_file &disk) {                //·µ»ØÊÇ·ñ³É¹¦
     int oriInode = curInode;
     if (dst.length() && dst[0] == '/')
         curInode = 0;
@@ -70,30 +80,30 @@ int cd(const string &dst, int &curInode, disk_file &disk) {                //è¿”
         int j;
         for (j = 0; j < MAX_DIR_ENTRIES_IN_BLOCK; j ++) {
             string tmp = disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[j].name;
-            if (tmp == dstPath[i]) {                                        //æ‰¾åˆ°äº†ï¼Œæ›´æ–°å½“å‰æŒ‡å‘ï¼Œè¿›å…¥ä¸‹ä¸€å±‚
+            if (tmp == dstPath[i]) {                                        //ÕÒµ½ÁË£¬¸üĞÂµ±Ç°Ö¸Ïò£¬½øÈëÏÂÒ»²ã
                 curInode = disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[j].inode_id;
-                if (disk.inodePointer[curInode].i_mode != 1) {              //ç„¶è€Œç›®æ ‡ä¸æ˜¯ç›®å½•
+                if (disk.inodePointer[curInode].i_mode != 1) {              //È»¶øÄ¿±ê²»ÊÇÄ¿Â¼
                     curInode = oriInode;
                     return -3;
                 }
                 break;
             }
         }
-        if (j == MAX_DIR_ENTRIES_IN_BLOCK)                                  //æ²¡æ‰¾åˆ°
+        if (j == MAX_DIR_ENTRIES_IN_BLOCK)                                  //Ã»ÕÒµ½
             break;
     }
-    if (i != dstPath.size()) {                                              //æ²¡æ‰¾åˆ°
-        curInode = oriInode;                                                //æŠŠå½“å‰ç›®å½•å¤åŸ
+    if (i != dstPath.size()) {                                              //Ã»ÕÒµ½
+        curInode = oriInode;                                                //°Ñµ±Ç°Ä¿Â¼¸´Ô­
         return -1;
     }
     return 1;
 }
 
 /***********
- * dst: ç›®æ ‡ä½ç½®è·¯å¾„
+ * dst: Ä¿±êÎ»ÖÃÂ·¾¶
  * curInode:
  * disk:
- * return: æ˜¯å¦æˆåŠŸ 
+ * return: ÊÇ·ñ³É¹¦ 
  *      succeeded: 1
  *      failed:  errorCode
  **********/
@@ -109,8 +119,8 @@ int mkdir(const string &dst, int curInode, disk_file &disk) {
         parentDir += dstSplit[i] + "/";
     string targetName = dstSplit[dstSplit.size() - 1];
 
-    int cdReturn = cd(parentDir, curInode, disk);                           //å…ˆåˆ‡åˆ°çˆ¶ç›®å½•å»
-    if (cdReturn <= 0)                                                      //å¤±è´¥
+    int cdReturn = cd(parentDir, curInode, disk);                           //ÏÈÇĞµ½¸¸Ä¿Â¼È¥
+    if (cdReturn <= 0)                                                      //Ê§°Ü
         return cdReturn;
 
     int i;
@@ -119,14 +129,14 @@ int mkdir(const string &dst, int curInode, disk_file &disk) {
         if (tmp == targetName)
             break;
     }
-    if (i != MAX_DIR_ENTRIES_IN_BLOCK)                                      //å·²å­˜åœ¨åŒåç›®å½•/æ–‡ä»¶
+    if (i != MAX_DIR_ENTRIES_IN_BLOCK)                                      //ÒÑ´æÔÚÍ¬ÃûÄ¿Â¼/ÎÄ¼ş
         return -2;
 
     int newDirPos;
     for (newDirPos = 0; newDirPos < MAX_DIR_ENTRIES_IN_BLOCK; newDirPos ++)
-        if (!strlen(disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[newDirPos].name))       //æ‰¾åˆ°ä¸€ä¸ªç©ºä½ç½®
+        if (!strlen(disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[newDirPos].name))       //ÕÒµ½Ò»¸ö¿ÕÎ»ÖÃ
             break;
-    if (newDirPos == MAX_DIR_ENTRIES_IN_BLOCK)                              //æ²¡æ‰¾åˆ°
+    if (newDirPos == MAX_DIR_ENTRIES_IN_BLOCK)                              //Ã»ÕÒµ½
         return -5;
 
     int newInodeNum, newBlockNum;
@@ -139,7 +149,7 @@ int mkdir(const string &dst, int curInode, disk_file &disk) {
     if (newInodeNum == BLOCK_SIZE || newBlockNum == BLOCK_SIZE)
         return -6;
   
-    //ä¸€åˆ‡å°±ç»ªï¼Œå¼€å§‹å†™æ–°ç›®å½•
+    //Ò»ÇĞ¾ÍĞ÷£¬¿ªÊ¼Ğ´ĞÂÄ¿Â¼
     disk.inodeName[newInodeNum] = targetName;
     disk.blockType[newBlockNum] = 1;
 
@@ -152,6 +162,8 @@ int mkdir(const string &dst, int curInode, disk_file &disk) {
     disk.inodePointer[newInodeNum].i_mode = 1;
     disk.inodePointer[newInodeNum].i_file_size = 256;
     disk.inodePointer[newInodeNum].i_blocks[0] = newBlockNum;
+    disk.inodePointer[newInodeNum].i_creation_time = time(NULL);
+    disk.inodePointer[newInodeNum].i_modification_time = time(NULL);
 
     strcpy(disk.dirBlockPointer[newBlockNum].dirs[0].name, ".");
     disk.dirBlockPointer[newBlockNum].dirs[0].inode_id = newInodeNum;
@@ -161,15 +173,36 @@ int mkdir(const string &dst, int curInode, disk_file &disk) {
     return 1;
 }
 
-int ls(const string &dst, int curInode, disk_file &disk) {
+int ls(const string &dst, const string &opt, int curInode, disk_file &disk) {
     int cdReturn = cd(dst, curInode, disk);
-    if (cdReturn <= 0)                                          //åˆ‡åˆ°ç›®æ ‡ç›®å½•å¤±è´¥
+    if (cdReturn == -3) {                                       //Ä¿±êÊÇ¸öÎÄ¼ş
+        cout << dst << endl;                                    //Ô­ÑùÏÔÊ¾¼´¿É
+        return 1;
+    }
+    if (cdReturn <= 0)                                          //ÇĞµ½Ä¿±êÄ¿Â¼Ê§°Ü
         return cdReturn;
     
+    if (opt.find('l') != string::npos) {
+        cout << "Type    Size      Creation Time       Modification Time    Name" << endl;
+    }
     for (int i = 0; i < MAX_DIR_ENTRIES_IN_BLOCK; i ++) {
         string name = disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[i].name;
-        if (name.size())
-            cout << name << " ";
+        if (name.size()) {
+            int subTgtInode = disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[i].inode_id;
+            if (opt.find('a') == string::npos && name[0] == '.')
+                continue;
+            string endByte = " ";
+            if (opt.find('l') != string::npos) {
+                string isDir = (disk.inodePointer[subTgtInode].i_mode ? "d" : "");
+                cout << setw(2) << isDir;
+                cout << setw(10) << disk.inodePointer[subTgtInode].i_file_size;
+                cout << setw(22) << getTime(disk.inodePointer[subTgtInode].i_creation_time);
+                cout << setw(22) << getTime(disk.inodePointer[subTgtInode].i_modification_time);
+                cout << "   ";
+                endByte = "\n";
+            }
+            cout << name << endByte;
+        }
     }
     cout << endl;
     return 1;
