@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <ctime>
+#include <cstdlib>
 #include "disk.h"
 using namespace std;
 
@@ -107,14 +109,23 @@ disk_file readDisk(ifstream &fin) {
     disk_file disk;
 
     disk.superBlockPointer = new super_block;
+    disk.inodePointer = new inode[4096];
+    disk.dirBlockPointer = new dir_block[4096];
+    disk.fileBlockPointer = new file_block[4096];
+
+    if (disk.superBlockPointer == NULL
+        || disk.inodePointer == NULL
+        || disk.dirBlockPointer == NULL
+        || disk.fileBlockPointer == NULL) {
+            cout << "System out of memory" << endl;
+            exit(0);
+        }
+
     *disk.superBlockPointer = readSuperBlock(fin);
 
-    disk.inodePointer = new inode[4096];
     for (int i = 0; i < 4096; i ++)
         disk.inodePointer[i] = readInode(fin);
     
-    disk.dirBlockPointer = new dir_block[4096];
-    disk.fileBlockPointer = new file_block[4096];
 	memset(disk.dirBlockPointer,0,sizeof(dir_block)*4096);
 	memset(disk.fileBlockPointer,0,sizeof(dir_block)*4096);
     for (int i = 0; i < 4096; i ++) {
@@ -166,6 +177,8 @@ bool format(const string &fileName) {
     disk.inodePointer[0].i_id = 0;
     disk.inodePointer[0].i_mode = 1;       //dir
     disk.inodePointer[0].i_file_size = 256;
+    disk.inodePointer[0].i_creation_time = time(NULL);
+    disk.inodePointer[0].i_modification_time = time(NULL);
     disk.inodePointer[0].i_blocks[0] = 0;
 
     for (int i = 1; i < 4096; i ++) {

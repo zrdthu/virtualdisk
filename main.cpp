@@ -10,6 +10,18 @@
 
 using namespace std;
 
+bool isLegal(const string &path) {
+    for (int i = 0; i < path.size(); i ++)
+        if ((path[i] >= '0' && path[i] <= '9')
+            || (path[i] >= 'a' && path[i] <= 'z')
+            ||(path[i] >= 'A' && path[i] <= 'Z')
+            || path[i] == '_' || path[i] == '.' || path[i] == '/')
+            ;
+        else
+            return false;
+    return true;
+}
+
 int main(int argc, char **argv) {
     string diskFileName = "disk.virtualdisk";
     if (argc > 1)
@@ -21,8 +33,18 @@ int main(int argc, char **argv) {
     }
     if (!fileOK)
         exit(0);
+    
+
+
     ifstream fin(diskFileName.c_str(), ios::binary);
 
+    streampos oriPos = fin.tellg();
+    fin.seekg(0, ios::end);
+    if (fin.tellg() != DISK_SIZE) {
+        cout << "Disk file corrupted" << endl;
+        exit(0);
+    }
+    fin.seekg(oriPos);
     disk_file disk = readDisk(fin);
     fin.close();
     int curInode = 0;
@@ -47,14 +69,20 @@ int main(int argc, char **argv) {
                 target = "/";
             else
                 target = cmdSplit[1];
-            errorAlert(cmd, target, cd(target, curInode, disk));
+            if (isLegal(target))
+                errorAlert(cmd, target, cd(target, curInode, disk));
+            else
+                cout << "Invalid path" << endl;
         }
         else if (cmd == "mkdir") {
             if (cmdSplit.size() < 2)
-                cout << "Usage: mkdir $path" << endl;
+                help(cmd);
             else {
                 target = cmdSplit[1];
-                errorAlert(cmd, target, mkdir(target, curInode, disk));
+                if (isLegal(target))
+                    errorAlert(cmd, target, mkdir(target, curInode, disk));
+                else
+                    cout << "Invalid path" << endl;
             }
         }
         else if (cmd == "ls") {
@@ -86,48 +114,114 @@ int main(int argc, char **argv) {
                 }
             }
             if (wrongUsage) {
-                cout << "Usage: ls [option] [target]" << endl;
-                cout << "    options:" << endl;
-                cout << "    -a    display all items" << endl;
-                cout << "    -l    display details" << endl;
+                help(cmd);
             }
             else {
-                errorAlert(cmd, target, ls(target, option, curInode, disk));
+                if (isLegal(target))
+                    errorAlert(cmd, target, ls(target, option, curInode, disk));
+                else
+                    cout << "Invalid path" << endl;
             }
         }
 		else if(cmd=="rmdir"){
 			if (cmdSplit.size() < 2)
-                cout << "Usage: rmdir $path" << endl;
+                help(cmd);
             else {
                 target = cmdSplit[1];
-			    errorAlert(cmd,target,rmdir(target,curInode,disk));
+                if (isLegal(target))
+			        errorAlert(cmd,target,rmdir(target,curInode,disk));
+                else
+                    cout << "Invalid path" << endl;
             }
 		}
 		else if(cmd=="echo"){
             if (cmdSplit.size() < 3)
-                cout << "Usage: echo $str $path" << endl;
+                help(cmd);
             else {
 			    string str = cmdSplit[1];
                 target = cmdSplit[2];
-			    errorAlert(cmd,target,echo(str,target,curInode,disk));
+                if (isLegal(target))
+			        errorAlert(cmd,target,echo(str,target,curInode,disk));
+                else
+                    cout << "Invalid path" << endl;
             }
 		}
 		else if(cmd=="cat"){
 			if (cmdSplit.size() < 2)
-                cout << "Usage: cat $path" << endl;
+                help(cmd);
             else {
                 target = cmdSplit[1];
-			    errorAlert(cmd,target,cat(target,curInode,disk));
+                if (isLegal(target))
+			        errorAlert(cmd,target,cat(target,curInode,disk));
+                else
+                    cout << "Invalid path" << endl;
             }
 		}
 		else if(cmd=="rm"){
 			if (cmdSplit.size() < 2)
-                cout << "Usage: rm $path" << endl;
+                help(cmd);
             else {
                 target = cmdSplit[1];
-			    errorAlert(cmd,target,rm(target,curInode,disk));
+                if (isLegal(target))
+			        errorAlert(cmd,target,rm(target,curInode,disk));
+                else
+                    cout << "Invalid path" << endl;
             }
 		}
+        else if(cmd=="rn"){
+			if (cmdSplit.size() < 3)
+                help(cmd);
+            else {
+                target = cmdSplit[1];
+                string newName = cmdSplit[2];
+                if (isLegal(target) && isLegal(newName))
+			        errorAlert(cmd,target,rn(target, newName,curInode,disk));
+                else
+                    cout << "Invalid path" << endl;
+            }
+		}
+        else if(cmd=="mv"){
+			if (cmdSplit.size() < 3)
+                help(cmd);
+            else {
+                target = cmdSplit[1];
+                string dst = cmdSplit[2];
+                if (isLegal(target) && isLegal(dst)) {
+                    int tmpInode = curInode;
+                    int cdReturn = cd(dst, tmpInode, disk);
+                    if (cdReturn < 0)
+                        errorAlert(cmd, dst, cdReturn);
+                    else
+			            errorAlert(cmd,target,mv(target, dst,curInode,disk));
+                }
+                else
+                    cout << "Invalid path" << endl;
+            }
+		}
+        else if(cmd=="cf"){
+			if (cmdSplit.size() < 4)
+                help(cmd);
+            else {
+                target = cmdSplit[1];
+                string dst = cmdSplit[2], newName = cmdSplit[3];
+                if (isLegal(target) && isLegal(dst) && isLegal(newName)) {
+                    int tmpInode = curInode;
+                    int cdReturn = cd(dst, tmpInode, disk);
+                    if (cdReturn < 0)
+                        errorAlert(cmd, dst, cdReturn);
+                    else
+			            errorAlert(cmd,target,cf(target, dst, newName,curInode,disk));
+                }
+                else
+                    cout << "Invalid path" << endl;
+            }
+		}
+        else if (cmd == "help") {
+            if (cmdSplit.size() < 2)
+                help(cmd);
+            else
+                help(cmdSplit[1]);
+        }
         else if (cmd != "exit" && cmd != "logout")
             cout << cmd << ": Command not found" << endl;
     }

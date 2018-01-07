@@ -9,6 +9,7 @@ const int SUPER_BLOCK_NUM = 2;
 const int INODE_BLOCK_NUM = 32;
 const int DATA_BLOCK_NUM = 4096;
 const int BLOCK_NUM =  SUPER_BLOCK_NUM + INODE_BLOCK_NUM + DATA_BLOCK_NUM;
+const int DISK_SIZE = BLOCK_NUM * BLOCK_SIZE;
 
 const int FILE_MAX_BLOCKS = 1;
 const int INODE_PLACEHOLDER_SIZE = 2;

@@ -4,10 +4,10 @@
 using namespace std;
 
 /***********
- * dst: Ŀ��λ��·��
+ * dst: 目锟斤拷位锟斤拷路锟斤拷
  * curInode:
  * disk:
- * return: �Ƿ�ɹ�? 
+ * return: 锟角凤拷晒锟? 
  *      succeeded: 1
  *      failed:  errorCode
  **********/
@@ -21,14 +21,14 @@ int echo(string& str, const string&dst,int cur_inode, disk_file&disk){
 	if (dst.length() && dst[0] == '/')
 		parentDir += "/";
 	vector<string> dstSplit = splitString(dst, "/");
-	if (!dstSplit.size())  //??????����-2��
+	if (!dstSplit.size())  //??????锟斤拷锟斤拷-2锟斤拷
 		return -2;
 	for (unsigned int i = 0; i < dstSplit.size() - 1; i ++)
 		parentDir += dstSplit[i] + "/";
 	string fileName = dstSplit[dstSplit.size() - 1];
 
-	int cdReturn = cd(parentDir, cur_inode, disk);                           //���е���Ŀ¼ȥ
-	if (cdReturn <= 0)                                                      //ʧ��
+	int cdReturn = cd(parentDir, cur_inode, disk);                           //锟斤拷锟叫碉拷锟斤拷目录去
+	if (cdReturn <= 0)                                                      //失锟斤拷
 		return cdReturn;
 
 	if (str.size() >= BLOCK_SIZE)
@@ -39,20 +39,20 @@ int echo(string& str, const string&dst,int cur_inode, disk_file&disk){
 		if (tmp == fileName)   //
 			break;
 	}
-    if(i!=MAX_DIR_ENTRIES_IN_BLOCK){//����ͬ��Ŀ¼�����ļ�
+    if(i!=MAX_DIR_ENTRIES_IN_BLOCK){//锟斤拷锟斤拷同锟斤拷目录锟斤拷锟斤拷锟侥硷拷
 		int fileNode=disk.dirBlockPointer[disk.inodePointer[cur_inode].i_blocks[0]].dirs[i].inode_id;
-		if(disk.inodePointer[fileNode].i_mode)//��·��ΪĿ¼
+		if(disk.inodePointer[fileNode].i_mode)//锟斤拷路锟斤拷为目录
 			return -4;
 		disk.inodePointer[fileNode].i_file_size=str.length();
 		disk.inodePointer[fileNode].i_modification_time = time(NULL);
-		for(int k=0;k<str.length();k++)disk.fileBlockPointer[disk.inodePointer[fileNode].i_blocks[0]].data[k]=str[k];//����ԭ�ļ�
+		for(int k=0;k<str.length();k++)disk.fileBlockPointer[disk.inodePointer[fileNode].i_blocks[0]].data[k]=str[k];//锟斤拷锟斤拷原锟侥硷拷
 	}
 	else{
 		int newDirPos;
 		for (newDirPos = 0; newDirPos < MAX_DIR_ENTRIES_IN_BLOCK; newDirPos ++)
-			if (!strlen(disk.dirBlockPointer[disk.inodePointer[cur_inode].i_blocks[0]].dirs[newDirPos].name))       //�ҵ�һ����λ��
+			if (!strlen(disk.dirBlockPointer[disk.inodePointer[cur_inode].i_blocks[0]].dirs[newDirPos].name))       //锟揭碉拷一锟斤拷锟斤拷位锟斤拷
 				break;
-		if (newDirPos == MAX_DIR_ENTRIES_IN_BLOCK)                              //û�ҵ�
+		if (newDirPos == MAX_DIR_ENTRIES_IN_BLOCK)                              //没锟揭碉拷
 		return -5;
 
 		int newInodeNum, newBlockNum;
@@ -66,7 +66,7 @@ int echo(string& str, const string&dst,int cur_inode, disk_file&disk){
 			return -6;
 
 
-		//��ʼ�������ļ�
+		//锟斤拷始锟斤拷锟斤拷锟斤拷锟侥硷拷
 		disk.inodeName[newInodeNum]=fileName;
 		disk.blockType[newBlockNum]=0;
 

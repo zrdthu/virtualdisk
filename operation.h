@@ -16,4 +16,9 @@ int rmdir(const std::string&dst,int cur_inode, disk_file&disk);
 int cat(const std::string&dst,int cur_inode, disk_file&disk);
 int rm(const std::string&dst,int cur_inode, disk_file&disk);
 int echo(std::string&str, const std::string&dst,int cur_inode, disk_file&disk);
+int rn(const std::string&, const std::string&, int, disk_file&);
+int mv(const std::string&, const std::string&, int, disk_file&);
+int cf(const std::string&, const std::string&, const std::string&, int, disk_file&);
+
+void help(const std::string &cmd);
 #endif

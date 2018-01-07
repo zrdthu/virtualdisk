@@ -54,7 +54,7 @@ void pwd(int curInode, disk_file &disk) {
     string path = "";
     while (curInode) {
         path = "/" + disk.inodeName[curInode] + path;
-        curInode = disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[1].inode_id;         //ÕÒµ½Æä¸¸Ä¿Â¼µÄinode±àºÅ
+        curInode = disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[1].inode_id;         //æ‰¾åˆ°å…¶çˆ¶ç›®å½•çš„inodeç¼–å·
     }
     if (!path.size())
         path = "/";
@@ -62,15 +62,15 @@ void pwd(int curInode, disk_file &disk) {
 }
 
 /***********
- * dst: Ä¿±êÎ»ÖÃÂ·¾¶
+ * dst: ç›®æ ‡ä½ç½®è·¯å¾„
  * curInode:
  * disk:
- * return: ÊÇ·ñ³É¹¦ 
+ * return: æ˜¯å¦æˆåŠŸ 
  *      succeeded: 1
  *      failed:  errorCode
  **********/
 
-int cd(const string &dst, int &curInode, disk_file &disk) {                //·µ»ØÊÇ·ñ³É¹¦
+int cd(const string &dst, int &curInode, disk_file &disk) {                //è¿”å›æ˜¯å¦æˆåŠŸ
     int oriInode = curInode;
     if (dst.length() && dst[0] == '/')
         curInode = 0;
@@ -80,30 +80,30 @@ int cd(const string &dst, int &curInode, disk_file &disk) {                //·µ»
         int j;
         for (j = 0; j < MAX_DIR_ENTRIES_IN_BLOCK; j ++) {
             string tmp = disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[j].name;
-            if (tmp == dstPath[i]) {                                        //ÕÒµ½ÁË£¬¸üĞÂµ±Ç°Ö¸Ïò£¬½øÈëÏÂÒ»²ã
+            if (tmp == dstPath[i]) {                                        //æ‰¾åˆ°äº†ï¼Œæ›´æ–°å½“å‰æŒ‡å‘ï¼Œè¿›å…¥ä¸‹ä¸€å±‚
                 curInode = disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[j].inode_id;
-                if (disk.inodePointer[curInode].i_mode != 1) {              //È»¶øÄ¿±ê²»ÊÇÄ¿Â¼
+                if (disk.inodePointer[curInode].i_mode != 1) {              //ç„¶è€Œç›®æ ‡ä¸æ˜¯ç›®å½•
                     curInode = oriInode;
                     return -3;
                 }
                 break;
             }
         }
-        if (j == MAX_DIR_ENTRIES_IN_BLOCK)                                  //Ã»ÕÒµ½
+        if (j == MAX_DIR_ENTRIES_IN_BLOCK)                                  //æ²¡æ‰¾åˆ°
             break;
     }
-    if (i != dstPath.size()) {                                              //Ã»ÕÒµ½
-        curInode = oriInode;                                                //°Ñµ±Ç°Ä¿Â¼¸´Ô­
+    if (i != dstPath.size()) {                                              //æ²¡æ‰¾åˆ°
+        curInode = oriInode;                                                //æŠŠå½“å‰ç›®å½•å¤åŸ
         return -1;
     }
     return 1;
 }
 
 /***********
- * dst: Ä¿±êÎ»ÖÃÂ·¾¶
+ * dst: ç›®æ ‡ä½ç½®è·¯å¾„
  * curInode:
  * disk:
- * return: ÊÇ·ñ³É¹¦ 
+ * return: æ˜¯å¦æˆåŠŸ 
  *      succeeded: 1
  *      failed:  errorCode
  **********/
@@ -119,8 +119,8 @@ int mkdir(const string &dst, int curInode, disk_file &disk) {
         parentDir += dstSplit[i] + "/";
     string targetName = dstSplit[dstSplit.size() - 1];
 
-    int cdReturn = cd(parentDir, curInode, disk);                           //ÏÈÇĞµ½¸¸Ä¿Â¼È¥
-    if (cdReturn <= 0)                                                      //Ê§°Ü
+    int cdReturn = cd(parentDir, curInode, disk);                           //å…ˆåˆ‡åˆ°çˆ¶ç›®å½•å»
+    if (cdReturn <= 0)                                                      //å¤±è´¥
         return cdReturn;
 
     int i;
@@ -129,14 +129,14 @@ int mkdir(const string &dst, int curInode, disk_file &disk) {
         if (tmp == targetName)
             break;
     }
-    if (i != MAX_DIR_ENTRIES_IN_BLOCK)                                      //ÒÑ´æÔÚÍ¬ÃûÄ¿Â¼/ÎÄ¼ş
+    if (i != MAX_DIR_ENTRIES_IN_BLOCK)                                      //å·²å­˜åœ¨åŒåç›®å½•/æ–‡ä»¶
         return -2;
 
     int newDirPos;
     for (newDirPos = 0; newDirPos < MAX_DIR_ENTRIES_IN_BLOCK; newDirPos ++)
-        if (!strlen(disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[newDirPos].name))       //ÕÒµ½Ò»¸ö¿ÕÎ»ÖÃ
+        if (!strlen(disk.dirBlockPointer[disk.inodePointer[curInode].i_blocks[0]].dirs[newDirPos].name))       //æ‰¾åˆ°ä¸€ä¸ªç©ºä½ç½®
             break;
-    if (newDirPos == MAX_DIR_ENTRIES_IN_BLOCK)                              //Ã»ÕÒµ½
+    if (newDirPos == MAX_DIR_ENTRIES_IN_BLOCK)                              //æ²¡æ‰¾åˆ°
         return -5;
 
     int newInodeNum, newBlockNum;
@@ -149,7 +149,7 @@ int mkdir(const string &dst, int curInode, disk_file &disk) {
     if (newInodeNum == BLOCK_SIZE || newBlockNum == BLOCK_SIZE)
         return -6;
   
-    //Ò»ÇĞ¾ÍĞ÷£¬¿ªÊ¼Ğ´ĞÂÄ¿Â¼
+    //ä¸€åˆ‡å°±ç»ªï¼Œå¼€å§‹å†™æ–°ç›®å½•
     disk.inodeName[newInodeNum] = targetName;
     disk.blockType[newBlockNum] = 1;
 
@@ -175,11 +175,37 @@ int mkdir(const string &dst, int curInode, disk_file &disk) {
 
 int ls(const string &dst, const string &opt, int curInode, disk_file &disk) {
     int cdReturn = cd(dst, curInode, disk);
-    if (cdReturn == -3) {                                       //Ä¿±êÊÇ¸öÎÄ¼ş
-        cout << dst << endl;                                    //Ô­ÑùÏÔÊ¾¼´¿É
+    if (cdReturn == -3) {                                       //ç›®æ ‡æ˜¯ä¸ªæ–‡ä»¶
+        if (opt.find('l') != string::npos) {
+            int tmpInode = curInode;
+            string parentDir = "", targetName = "";
+            if (dst[0] == '/')
+                parentDir += "/";
+            vector<string> v = splitString(dst, "/");
+            for (int i = 0; i < v.size() - 1; i ++)
+                parentDir += (v[i] + "/");
+            targetName = v[v.size() - 1];
+            cd(parentDir, tmpInode, disk);
+            int targetInode;
+            for (int i = 0; i < MAX_DIR_ENTRIES_IN_BLOCK; i ++)
+                if (targetName == (string)disk.dirBlockPointer[disk.inodePointer[tmpInode].i_blocks[0]].dirs[i].name) {
+                    targetInode = disk.dirBlockPointer[disk.inodePointer[tmpInode].i_blocks[0]].dirs[i].inode_id;
+                    break;
+                }
+
+            cout << "Type    Size      Creation Time       Modification Time    Name" << endl;
+            string isDir = (disk.inodePointer[targetInode].i_mode ? "d" : "f");
+            cout << setw(2) << isDir;
+            cout << setw(10) << disk.inodePointer[targetInode].i_file_size;
+            cout << setw(22) << getTime(disk.inodePointer[targetInode].i_creation_time);
+            cout << setw(22) << getTime(disk.inodePointer[targetInode].i_modification_time);
+            cout << "   ";
+        }
+
+        cout << dst << endl;                                    //åŸæ ·æ˜¾ç¤ºå³å¯
         return 1;
     }
-    if (cdReturn <= 0)                                          //ÇĞµ½Ä¿±êÄ¿Â¼Ê§°Ü
+    if (cdReturn <= 0)                                          //åˆ‡åˆ°ç›®æ ‡ç›®å½•å¤±è´¥
         return cdReturn;
     
     if (opt.find('l') != string::npos) {
@@ -193,7 +219,7 @@ int ls(const string &dst, const string &opt, int curInode, disk_file &disk) {
                 continue;
             string endByte = " ";
             if (opt.find('l') != string::npos) {
-                string isDir = (disk.inodePointer[subTgtInode].i_mode ? "d" : "");
+                string isDir = (disk.inodePointer[subTgtInode].i_mode ? "d" : "f");
                 cout << setw(2) << isDir;
                 cout << setw(10) << disk.inodePointer[subTgtInode].i_file_size;
                 cout << setw(22) << getTime(disk.inodePointer[subTgtInode].i_creation_time);
@@ -206,4 +232,63 @@ int ls(const string &dst, const string &opt, int curInode, disk_file &disk) {
     }
     cout << endl;
     return 1;
+}
+
+void help(const string &cmd) {
+    if (cmd == "pwd") {
+        cout << "Usage: pwd" << endl;
+        cout << "Display the absolute path of current directory." << endl;
+    }
+    else if (cmd == "mkdir") {
+        cout << "Usage: mkdir $path" << endl;
+        cout << "Make a new directory at $path." << endl;
+    }
+    else if (cmd == "cd") {
+        cout << "Usage: cd [$path]" << endl;
+        cout << "Default for $path: /" << endl;
+        cout << "Change the current directory to $path" << endl;
+    }
+    else if (cmd == "ls") {
+        cout << "Usage: ls [$option] [$path]" << endl;
+        cout << "Options:" << endl;
+        cout << "   -a: display all items, including hidden ones" << endl;
+        cout << "   -l: display details in a table" << endl;
+        cout << "Default for $option: none" << endl;
+        cout << "Default for $path: ." << endl;
+    }
+    else if (cmd == "rmdir") {
+        cout << "Usage: rmdir $path" << endl;
+        cout << "Remove directory $path and all its contents recursively" << endl;
+    }
+    else if (cmd == "echo") {
+        cout << "Usage: echo $str $path" << endl;
+        cout <<"Write $str into file $path, if $path already exists, overwrite file" << endl;
+    }
+    else if (cmd == "cat") {
+        cout << "Usage: cat $path" << endl;
+        cout << "Display the contents of file $path at the screen" << endl;
+    }
+    else if (cmd == "rm") {
+        cout << "Usage: rm $path" << endl;
+        cout << "Remove file $path" << endl;
+    }
+    else if (cmd == "rn") {
+        cout << "Usage: rn $path $newname" << endl;
+        cout << "Rename $path as $newname" << endl;
+    }
+    else if (cmd == "mv") {
+        cout << "Usage: mv $source_path $target_path" << endl;
+        cout << "Move $source_path and all its contents to $target_path recursively" << endl;
+    }
+    else if (cmd == "rf") {
+        cout << "Usage: $source_path $target_path $new_filename" << endl;
+        cout << "Move file $source_path to $target_path and rename it as $new_filename" << endl;
+    }
+    else if (cmd == "help") {
+        cout << "Usage: help $cmd" << endl;
+        cout << "Display the usage of $cmd" << endl;
+    }
+    else {
+        cout << "No such command named " << cmd << endl;
+    }
 }

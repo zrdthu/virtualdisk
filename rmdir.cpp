@@ -1,20 +1,21 @@
 #include"operation.h"
 #include<iostream>
 #include <cstring>
+#include <ctime>
 using namespace std;
 
 /***********
- * dst: Ä¿±êÎ»ÖÃÂ·¾¶
- * curInode:³É¹¦ÔòÖØÖÃÎª¸¸¼¶Ä¿Â¼£¬´íÎóÔò±£³Ö²»±ä
+ * dst: ç›®æ ‡ä½ç½®è·¯å¾„
+ * curInode:æˆåŠŸåˆ™é‡ç½®ä¸ºçˆ¶çº§ç›®å½•ï¼Œé”™è¯¯åˆ™ä¿æŒä¸å˜
  * disk:
- * return: ÊÇ·ñ³É¹¦ 
+ * return: æ˜¯å¦æˆåŠŸ 
  *      succeeded: 1
  *      failed:  errorCode
  **********/
 
 bool Leaf_node(disk_file&disk,int BlockNum){
 	bool state=true;
-	if(!disk.blockType[BlockNum])return state;//Èç¹ûÎªÊı¾İ¿é±ØÎªÒ¶×Ó½áµã
+	if(!disk.blockType[BlockNum])return state;//å¦‚æœä¸ºæ•°æ®å—å¿…ä¸ºå¶å­ç»“ç‚¹
 	for(int i=2;i<MAX_DIR_ENTRIES_IN_BLOCK;i++){
 		if(strlen(disk.dirBlockPointer[BlockNum].dirs[i].name))
 		{state=false;break;}
@@ -23,9 +24,9 @@ bool Leaf_node(disk_file&disk,int BlockNum){
 }
 
 bool searchCurNode(int cur_inode,int targeNode, disk_file&disk){
-	if(targeNode==cur_inode)//½áµãÎªµ±Ç°Ä¿Â¼ÔòÕÒµ½ÁË
+	if(targeNode==cur_inode)//ç»“ç‚¹ä¸ºå½“å‰ç›®å½•åˆ™æ‰¾åˆ°äº†
 		return true;
-	else if(Leaf_node(disk,disk.inodePointer[targeNode].i_blocks[0]))//½áµã²»Îªµ±Ç°Ä¿Â¼£¬µ«ÎªÒ¶×Ó½áµã
+	else if(Leaf_node(disk,disk.inodePointer[targeNode].i_blocks[0]))//ç»“ç‚¹ä¸ä¸ºå½“å‰ç›®å½•ï¼Œä½†ä¸ºå¶å­ç»“ç‚¹
 		return false;
 	else{
 		bool state=false;
@@ -38,14 +39,14 @@ bool searchCurNode(int cur_inode,int targeNode, disk_file&disk){
 	}
 }
 
-void dirdelete(int pre_node,int pos,int targeNode, disk_file&disk){//pos±íÊ¾ÔÚÉÏ¼¶Ä¿Â¼ÖĞµÄĞòºÅ
-	if(Leaf_node(disk,disk.inodePointer[targeNode].i_blocks[0])){//´ıÉ¾³ıÒ¶×Ó½áµãÎªÊı¾İ¿é»òÎªÄ¿Â¼Ê÷Ò¶×Ó½áµã
+void dirdelete(int pre_node,int pos,int targeNode, disk_file&disk){//posè¡¨ç¤ºåœ¨ä¸Šçº§ç›®å½•ä¸­çš„åºå·
+	if(Leaf_node(disk,disk.inodePointer[targeNode].i_blocks[0])){//å¾…åˆ é™¤å¶å­ç»“ç‚¹ä¸ºæ•°æ®å—æˆ–ä¸ºç›®å½•æ ‘å¶å­ç»“ç‚¹
 		disk.superBlockPointer->block_bitmap[disk.inodePointer[targeNode].i_blocks[0]]=0;		
 		disk.superBlockPointer->inode_bitmap[targeNode]=0;
 		for(int k=0;k<MAX_FILENAME_SIZE;k++)
-			disk.dirBlockPointer[disk.inodePointer[pre_node].i_blocks[0]].dirs[pos].name[k]='\0';//É¾³ıÉÏ¼¶Ä¿Â¼ÖĞÏà¹ØĞÅÏ¢
+			disk.dirBlockPointer[disk.inodePointer[pre_node].i_blocks[0]].dirs[pos].name[k]='\0';//åˆ é™¤ä¸Šçº§ç›®å½•ä¸­ç›¸å…³ä¿¡æ¯
 	}
-	else {//Ä¿Â¼¿é²»ÎªÒ¶×Ó½Úµã£¬µİ¹éÉ¾³ı
+	else {//ç›®å½•å—ä¸ä¸ºå¶å­èŠ‚ç‚¹ï¼Œé€’å½’åˆ é™¤
 		for(int i=2;i<MAX_DIR_ENTRIES_IN_BLOCK;i++)
 			if(strlen(disk.dirBlockPointer[disk.inodePointer[targeNode].i_blocks[0]].dirs[i].name))
 			dirdelete(targeNode,i,disk.dirBlockPointer[disk.inodePointer[targeNode].i_blocks[0]].dirs[i].inode_id,disk);
@@ -53,25 +54,23 @@ void dirdelete(int pre_node,int pos,int targeNode, disk_file&disk){//pos±íÊ¾ÔÚÉÏ
 	}
 }
 
-int rmdir(const string&dst,int cur_inode, disk_file&disk){//É¾³ıÄ¿Â¼¼°Ä¿Â¼ÏÂµÄÎÄ¼ş
+int rmdir(const string&dst,int cur_inode, disk_file&disk){//åˆ é™¤ç›®å½•åŠç›®å½•ä¸‹çš„æ–‡ä»¶
 	string parentDir = "";int oriNode=cur_inode;
 	if (dst.length() && dst[0] == '/')
 		parentDir += "/";
 	vector<string> dstSplit = splitString(dst, "/");
-	if (!dstSplit.size())  //??????·µ»Ø-2£¿
+	if (!dstSplit.size())  //??????è¿”å›-2ï¼Ÿ
 		return -2;
 	for (unsigned int i = 0; i < dstSplit.size() - 1; i ++)
 		parentDir += dstSplit[i] + "/";
 	string dirName = dstSplit[dstSplit.size() - 1];
-	if(parentDir.length()){
-		int cdReturn = cd(parentDir, cur_inode, disk);                           //ÏÈÇĞµ½¸¸Ä¿Â¼È¥
-		if (cdReturn <= 0)                                                      //Ê§°Ü
-			return cdReturn;
-	}
-	else{
-		cout<<"current dictionary is non-empty"<<endl;
-		return 1;
-	}
+	int cdReturn = cd(parentDir, cur_inode, disk);                           //å…ˆåˆ‡åˆ°çˆ¶ç›®å½•å»
+	if (cdReturn <= 0)                                                      //å¤±è´¥
+		return cdReturn;
+	// else{
+	// 	cout<<"current dictionary is non-empty"<<endl;
+	// 	return 1;
+	// }
 
 	int i;
 	for (i = 2; i < MAX_DIR_ENTRIES_IN_BLOCK; i ++) {
@@ -79,17 +78,17 @@ int rmdir(const string&dst,int cur_inode, disk_file&disk){//É¾³ıÄ¿Â¼¼°Ä¿Â¼ÏÂµÄÎÄ
 		if (tmp == dirName)
 			break;
 	}
-	if (i == MAX_DIR_ENTRIES_IN_BLOCK)                                      //Ã»ÓĞÕÒµ½¸ÃÄ¿Â¼
+	if (i == MAX_DIR_ENTRIES_IN_BLOCK)                                      //æ²¡æœ‰æ‰¾åˆ°è¯¥ç›®å½•
 	return -1;
 	
 	int dirNode=disk.dirBlockPointer[disk.inodePointer[cur_inode].i_blocks[0]].dirs[i].inode_id;
 
-	if(searchCurNode(oriNode,dirNode,disk))//Èç¹ûÉ¾³ıÄ¿Â¼ÏÂº¬ÓĞµ±Ç°Ä¿Â¼Ôò²»É¾
-	{cout<<"current dirctionay is non-empty"<<endl;return 1;}
+	if(searchCurNode(oriNode,dirNode,disk))//å¦‚æœåˆ é™¤ç›®å½•ä¸‹å«æœ‰å½“å‰ç›®å½•åˆ™ä¸åˆ 
+	{cout<<(string)disk.inodeName[dirNode] << " current dirctionay is non-empty"<<endl;return 1;}
 
-	if(!disk.inodePointer[dirNode].i_mode)return -3;//¸ÃÂ·¾¶ÎªÎÄ¼ş
+	if(!disk.inodePointer[dirNode].i_mode)return -3;//è¯¥è·¯å¾„ä¸ºæ–‡ä»¶
 	dirdelete(cur_inode,i,dirNode,disk);
-
+	disk.inodePointer[cur_inode].i_modification_time = time(NULL);
 	return 1;
 }
 
